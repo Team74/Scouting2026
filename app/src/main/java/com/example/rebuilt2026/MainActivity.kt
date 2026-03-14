@@ -15,6 +15,12 @@ import com.example.rebuilt2026.database.TabletDatabase
 import com.example.rebuilt2026.database.tabletDatabaseBuilder
 import com.example.rebuilt2026.helper.Api22Able
 import com.example.rebuilt2026.helper.Screen
+import com.example.rebuilt2026.screens.AdminScreen
+import com.example.rebuilt2026.screens.AutonScreen
+import com.example.rebuilt2026.screens.HomeScreen
+import com.example.rebuilt2026.screens.PostMatchScreen
+import com.example.rebuilt2026.screens.PreMatchScreen
+import com.example.rebuilt2026.screens.TeleopScreen
 import com.example.rebuilt2026.ui.theme.Rebuilt2026Theme
 
 class MainActivity : ComponentActivity() {
@@ -73,14 +79,12 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 // This is the mapping of the Screen enum to each screen composable
                 NavHost(navController, Screen.Home) {
-                    // NOTE: Remember to pass the navController to each screen
-                    //  so they each have access to the navigation functions!!!
-                    composable<Screen.Home>         { /* TODO: Execute screen here!!! */ }
-                    composable<Screen.PreMatch>     { /* TODO: Execute screen here!!! */ }
-                    composable<Screen.Auton>        { /* TODO: Execute screen here!!! */ }
-                    composable<Screen.Teleop>       { /* TODO: Execute screen here!!! */ }
-                    composable<Screen.PostMatch>    { /* TODO: Execute screen here!!! */ }
-                    composable<Screen.Admin>        { /* TODO: Execute screen here!!! */ }
+                    composable<Screen.Home>         { HomeScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.PreMatch>     { PreMatchScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.Auton>        { AutonScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.Teleop>       { TeleopScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.PostMatch>    { PostMatchScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.Admin>        { AdminScreen(navController, tabletDatabase, tabletState) }
                 }
 
             }
