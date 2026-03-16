@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.rebuilt2026.database.TabletDataStore
 import com.example.rebuilt2026.database.TabletDatabase
+import com.example.rebuilt2026.database.saveDatabaseToCsv
 import com.example.rebuilt2026.database.tabletDatabaseBuilder
 import com.example.rebuilt2026.helper.Api22Able
 import com.example.rebuilt2026.helper.Screen
@@ -36,12 +37,7 @@ class MainActivity : ComponentActivity() {
     // Activity launcher for the file selector when exporting the database to csv
     val getContent = registerForActivityResult(ActivityResultContracts.CreateDocument(
         "text/csv"
-    )) { uri ->
-        // If a proper uri was returned, export the database as a csv to that location
-        if (uri != null) {
-            /* TODO: Export database here */
-        }
-    }
+    )) { uri -> saveDatabaseToCsv(uri, tabletDatabase, application.contentResolver) }
 
     /* ----------------------------------------------------------------------------------------- */
     // [METHODS]
@@ -84,7 +80,11 @@ class MainActivity : ComponentActivity() {
                     composable<Screen.Auton>        { AutonScreen(navController, tabletDatabase, tabletState) }
                     composable<Screen.Teleop>       { TeleopScreen(navController, tabletDatabase, tabletState) }
                     composable<Screen.PostMatch>    { PostMatchScreen(navController, tabletDatabase, tabletState) }
-                    composable<Screen.Admin>        { AdminScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.Admin>        {
+                        AdminScreen(navController, tabletDatabase, tabletState) {
+                            tabletState.withScouter { launchExportPathSelector(it.name) }
+                        }
+                    }
                 }
 
             }

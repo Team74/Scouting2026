@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
-import com.example.rebuilt2026.helper.Scouting
+import com.example.rebuilt2026.helper.Scouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,7 +27,8 @@ class TabletDataStore(
     // Data class to be storing
     @Serializable
     data class TabletDataModel(
-        val scouting: Scouting = Scouting.ERROR_STATE
+        val scouting: Scouter = Scouter.NONE,
+        val matchData: MatchData = MatchData()
     )
 
     // Create the data store serializer
@@ -62,11 +63,20 @@ class TabletDataStore(
     // [METHODS]
     /* ----------------------------------------------------------------------------------------- */
 
-    fun getScouting(): Flow<Scouting> = context.dataStore.data.map { it.scouting }
-    fun setScouting(value: Scouting) {
+    fun getScouter(): Flow<Scouter> = context.dataStore.data.map { it.scouting }
+    fun setScouter(value: Scouter) {
         coroutine.launch { context.dataStore.updateData { it.copy(scouting = value) } }
     }
+    fun withScouter(lambda: (Scouter) -> Unit) {
+        coroutine.launch { getScouter().collect { lambda(it) } }
+    }
 
-
+    fun getMatch(): Flow<MatchData> = context.dataStore.data.map { it.matchData }
+    fun setMatch(value: MatchData) {
+        coroutine.launch { context.dataStore.updateData { it.copy(matchData = value) } }
+    }
+    fun withMatch(lambda: (MatchData) -> Unit) {
+        coroutine.launch { getMatch().collect { lambda(it) } }
+    }
 
 }

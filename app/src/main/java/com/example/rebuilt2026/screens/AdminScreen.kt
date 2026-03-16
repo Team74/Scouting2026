@@ -9,7 +9,8 @@ import com.example.rebuilt2026.database.TabletDatabase
 fun AdminScreen(
     nav: NavHostController,
     db: TabletDatabase,
-    state: TabletDataStore
+    state: TabletDataStore,
+    onExportDatabase: () -> Unit
 ) {
 
     //
