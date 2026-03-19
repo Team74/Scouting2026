@@ -31,8 +31,7 @@ class MainActivity : ComponentActivity() {
     /* ----------------------------------------------------------------------------------------- */
 
     // App database instance to be initialized in the onCreate function
-    private lateinit var tabletDatabase: TabletDatabase
-    // App preferences used for tablet position and between-screen state tracking
+    private lateinit var tabletDatabase: TabletDatabase    // App preferences used for tablet position and between-screen state tracking
     private lateinit var tabletState: TabletDataStore
     // Activity launcher for the file selector when exporting the database to csv
     val getContent = registerForActivityResult(ActivityResultContracts.CreateDocument(
