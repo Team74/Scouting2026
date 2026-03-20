@@ -110,31 +110,15 @@ fun TeleopScreen(
                     score = penaltyScore,
                     onScoreChange = { penaltyScore = it }
                 )
-                ScoreSystem(
-                    label = "Human Player Score",
-                    score = humanScore,
-                    onScoreChange = { humanScore = it }
-                )
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    Text(
-                        text = "Did the robot move?",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Switch(
-                        checked = robotMoved,
-                        onCheckedChange = { robotMoved = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = White,
-                            checkedTrackColor = purpleColor,
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color.LightGray
-                        )
+                    ScoreSystem(
+                        label = "Human Player Score",
+                        score = humanScore,
+                        onScoreChange = { humanScore = it }
                     )
                 }
             }
@@ -152,7 +136,7 @@ fun TeleopScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
                     Text(
-                        text = "Did the robot move?",
+                        text = "did the human player even do anything?",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
                     )
