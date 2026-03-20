@@ -110,24 +110,49 @@ fun TeleopScreen(
                     score = penaltyScore,
                     onScoreChange = { penaltyScore = it }
                 )
-                }
-            }
-
-            // human player colum
-            Column(
-                modifier = Modifier
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+                ScoreSystem(
+                    label = "Human Player Score",
+                    score = humanScore,
+                    onScoreChange = { humanScore = it }
+                )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
-
                     Text(
-                        text = "Is human player good?",
+                        text = "Did the robot move?",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Switch(
+                        checked = robotMoved,
+                        onCheckedChange = { robotMoved = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = White,
+                            checkedTrackColor = purpleColor,
+                            uncheckedThumbColor = Color.Gray,
+                            uncheckedTrackColor = Color.LightGray
+                        )
+                    )
+                }
+            }
+
+            // human player colum
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = "Did the robot move?",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -183,7 +208,7 @@ fun TeleopScreen(
 
             // Navigation Column
             Column(
-                modifier = Modifier,
+                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom
             ) {
@@ -201,3 +226,5 @@ fun TeleopScreen(
             }
         }
     }
+
+}
