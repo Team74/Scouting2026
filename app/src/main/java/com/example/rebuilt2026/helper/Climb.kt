@@ -3,7 +3,7 @@ package com.example.rebuilt2026.helper
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class Climb(name: String) {
+enum class Climb(val label: String) {
 
     NO_CLIMB("No Climb"),
     LEVEL_1("Level 1"),

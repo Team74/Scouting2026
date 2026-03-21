@@ -25,6 +25,7 @@ data class MatchData(
     val autonActiveScore: Int = 0,
     val autonPenalties: Int = 0,
     val autonClimb: Climb = Climb.NO_CLIMB,
+    val autonQuality: Int = 0,
 
     // Teleop
     val teleopFuelPickup: Int = 0,
@@ -34,7 +35,7 @@ data class MatchData(
 
     // PostMatch
     val endClimb: Climb = Climb.NO_CLIMB,
-    val endClimbQuality: Int = 0,
+    val matchQuality: Int = 0,
 
     // Notes
     val playedDefense: Boolean = false,
@@ -60,7 +61,7 @@ data class MatchData(
         /**
          * Companion function to fetch all property names.
          */
-        fun getPropertyNames(): List<String> = this::class.declaredMemberProperties.map { it.name }
+        fun getPropertyNames(): List<String> = MatchData::class.declaredMemberProperties.map { it.name }
 
     }
 

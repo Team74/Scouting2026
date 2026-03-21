@@ -31,7 +31,8 @@ class MainActivity : ComponentActivity() {
     /* ----------------------------------------------------------------------------------------- */
 
     // App database instance to be initialized in the onCreate function
-    private lateinit var tabletDatabase: TabletDatabase    // App preferences used for tablet position and between-screen state tracking
+    private lateinit var tabletDatabase: TabletDatabase
+    // App preferences used for tablet position and between-screen state tracking
     private lateinit var tabletState: TabletDataStore
     // Activity launcher for the file selector when exporting the database to csv
     val getContent = registerForActivityResult(ActivityResultContracts.CreateDocument(
@@ -74,15 +75,18 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 // This is the mapping of the Screen enum to each screen composable
                 NavHost(navController, Screen.Home) {
-                    composable<Screen.Home>         { HomeScreen(navController, tabletDatabase, tabletState) }
-                    composable<Screen.PreMatch>     { PreMatchScreen(navController, tabletDatabase, tabletState) }
-                    composable<Screen.Auton>        { AutonScreen(navController, tabletDatabase, tabletState) }
-                    composable<Screen.Teleop>       { TeleopScreen(navController, tabletDatabase, tabletState) }
+                    composable<Screen.Home>         { HomeScreen(navController, tabletState) }
+                    composable<Screen.PreMatch>     { PreMatchScreen(navController, tabletState) }
+                    composable<Screen.Auton>        { AutonScreen(navController, tabletState) }
+                    composable<Screen.Teleop>       { TeleopScreen(navController, tabletState) }
                     composable<Screen.PostMatch>    { PostMatchScreen(navController, tabletDatabase, tabletState) }
                     composable<Screen.Admin>        {
-                        AdminScreen(navController, tabletDatabase, tabletState) {
-                            tabletState.withScouter { launchExportPathSelector(it.name) }
-                        }
+                        AdminScreen(
+                            navController,
+                            tabletState,
+                            { tabletState.withMatch { tabletDatabase.matchDataDao().nuke() } },
+                            { tabletState.withScouter { launchExportPathSelector(it.name) } }
+                        )
                     }
                 }
 

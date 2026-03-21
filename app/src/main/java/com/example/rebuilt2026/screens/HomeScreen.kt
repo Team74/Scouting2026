@@ -1,3 +1,5 @@
+@file:Suppress("AssignedValueIsNeverRead")
+
 package com.example.rebuilt2026.screens
 
 import androidx.compose.foundation.Image
@@ -10,61 +12,119 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.rebuilt2026.R
+import com.example.rebuilt2026.database.MatchData
 import com.example.rebuilt2026.database.TabletDataStore
-import com.example.rebuilt2026.database.TabletDatabase
+import com.example.rebuilt2026.helper.Scouter
 import com.example.rebuilt2026.helper.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     nav: NavHostController,
-    db: TabletDatabase,
     state: TabletDataStore
 ) {
 
-    val logoColor = Color(154, 73, 79, 255)
-    val buttonColors = ButtonDefaults.buttonColors(
-        containerColor = Color(164, 55, 57, 255)
-    )
+    var titleText by remember { mutableStateOf(Scouter.NONE.pos) }
+    var primaryColor by remember { mutableStateOf(Color.Transparent) }
+    var showAdminDialog by remember { mutableStateOf(false) }
+    var adminPassword by remember { mutableStateOf("") }
 
-    /* ----------------------------------------------------------------------------- */
+    // One time init on screen load
+    LaunchedEffect(Unit) {
+        state.withScouter {
+            titleText = it.pos
+            primaryColor = it.color()
+        }
+        state.setMatch(MatchData())
+    }
+
+    /* ----------------------------------------------------------------------------------------- */
     // [MAIN STRUCTURE]
-    /* ----------------------------------------------------------------------------- */
+    /* ----------------------------------------------------------------------------------------- */
+
+    // Above all other widgets
+    if (showAdminDialog) {
+
+        BasicAlertDialog(
+            onDismissRequest = { showAdminDialog = false }
+        ) {
+            Card {
+                Text(
+                    text = "Admin password",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                )
+                OutlinedTextField(
+                    value = adminPassword,
+                    onValueChange = { adminPassword = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Password
+                    ),
+                    keyboardActions = KeyboardActions(onDone = {
+                        val password = "yapyapyap"
+                        if (adminPassword == password) {
+                            nav.navigate(Screen.Admin)
+                        }
+                    }),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                )
+            }
+        }
+    }
 
     Scaffold(
+
         topBar = {
             TopAppBar(
-                title = { Text(text = "Home") },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Red,
-                        titleContentColor = Color.White
-                    )
+                title = { Text(text = titleText) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = primaryColor,
+                    titleContentColor = Color.White
+                )
             )
-        },
-        modifier = Modifier
-            .fillMaxSize()
+        }
+
     ) { innerPadding ->
 
         // Main Row layout that holds the home screen options and the app logo box
@@ -87,11 +147,16 @@ fun HomeScreen(
                 // Record a match button
                 Button(
                     onClick = { nav.navigate(Screen.PreMatch) },
-                    colors = buttonColors,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = primaryColor,
+                        contentColor = Color.White
+                    ),
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier
                         .fillMaxWidth()
-                ) { Text("Record a Match", fontSize = 55.sp) }
+                ) {
+                    Text("Record a Match", fontSize = 55.sp)
+                }
 
                 // Nested row layout for little guy and admin button
                 Row(
@@ -108,8 +173,11 @@ fun HomeScreen(
                     )
                     // Admin button
                     Button(
-                        onClick = { /* TODO: Start password login */ },
-                        colors = buttonColors,
+                        onClick = { showAdminDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = primaryColor,
+                            contentColor = Color.White
+                        ),
                         shape = MaterialTheme.shapes.large,
                     ) { Text("Admin", fontSize = 55.sp) }
                 }
@@ -117,13 +185,16 @@ fun HomeScreen(
                 // Data board (subject to change if we don't have time)
                 Button(
                     onClick = { /* TODO: Umm idk decide later */ },
-                    colors = buttonColors,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = primaryColor,
+                        contentColor = Color.White
+                    ),
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "Data Board",
+                        text = "Yippee!",
                         fontSize = 55.sp
                     )
                 }
@@ -131,7 +202,7 @@ fun HomeScreen(
             }
 
             // Right column app logo
-            AppLogo(logoColor)
+            AppLogo(primaryColor)
 
         }
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -29,7 +30,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.rebuilt2026.R
 import com.example.rebuilt2026.database.TabletDataStore
-import com.example.rebuilt2026.database.TabletDatabase
+import com.example.rebuilt2026.helper.Climb
 import com.example.rebuilt2026.helper.ScoreSystem
 import com.example.rebuilt2026.helper.Screen
 
@@ -56,30 +59,68 @@ import com.example.rebuilt2026.helper.Screen
 @Composable
 fun AutonScreen(
     nav: NavHostController,
-    db: TabletDatabase,
     state: TabletDataStore
 ) {
 
-    var fuelScore by remember { mutableIntStateOf(0) }
+    var primaryColor by remember { mutableStateOf(Color.Transparent) }
+    var navClicked by remember { mutableStateOf(false) }
+
+    var fuelPickup by remember { mutableIntStateOf(0) }
     var inactiveScore by remember { mutableIntStateOf(0) }
     var activeScore by remember { mutableIntStateOf(0) }
-    var penaltyScore by remember { mutableIntStateOf(0) }
-    var robotMoved by remember { mutableStateOf(false) }
+    var penalties by remember { mutableIntStateOf(0) }
 
     var climbExpanded by remember { mutableStateOf(false) }
-    val climbOptions = listOf("None", "1st level", "2ed level", "3ed level")
-    var selectedClimb by remember { mutableStateOf(climbOptions[0]) }
+    var selectedClimb by remember { mutableStateOf(Climb.NO_CLIMB) }
+    var selectedQuality by remember { mutableIntStateOf(1) }
+    var robotMoved by remember { mutableStateOf(false) }
+
     val orangeColor = Color(0xFFFF5900)
 
-    var selectedQuality by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(Unit) {
+        state.withScouter { primaryColor = it.color() }
+        state.withMatch {
+            fuelPickup = it.autonFuelPickup
+            inactiveScore = it.autonInactiveScore
+            activeScore = it.autonActiveScore
+            penalties = it.autonPenalties
+            selectedClimb = it.autonClimb
+            selectedQuality = it.autonQuality
+            robotMoved = it.autonMoved
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Auton Match Screen") },
                 navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack()}) {Icon(Icons.AutoMirrored.Filled.ArrowBack, null)}
-                }
+                    IconButton(
+                        onClick = {
+                            if (!navClicked) {
+                                state.withMatch {
+                                    state.setMatch(it.copy(
+                                        autonMoved = robotMoved,
+                                        autonFuelPickup = fuelPickup,
+                                        autonInactiveScore = inactiveScore,
+                                        autonActiveScore = activeScore,
+                                        autonPenalties = penalties,
+                                        autonClimb = selectedClimb,
+                                        autonQuality = selectedQuality
+                                    ))
+                                }
+                                nav.popBackStack()
+                                navClicked = true
+                            }
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = primaryColor,
+                    titleContentColor = White
+                )
             )
         }
     ) { innerPadding ->
@@ -97,8 +138,8 @@ fun AutonScreen(
 
                 ScoreSystem(
                     label = "Fuel Pick Up",
-                    score = fuelScore,
-                    onScoreChange = { fuelScore = it },
+                    score = fuelPickup,
+                    onScoreChange = { fuelPickup = it },
                     buttonColor = orangeColor
                 )
                 ScoreSystem(
@@ -115,8 +156,8 @@ fun AutonScreen(
                 )
                 ScoreSystem(
                     label = "Penalties",
-                    score = penaltyScore,
-                    onScoreChange = { penaltyScore = it },
+                    score = penalties,
+                    onScoreChange = { penalties = it },
                     buttonColor = orangeColor
                 )
 
@@ -152,7 +193,7 @@ fun AutonScreen(
                     onExpandedChange = { climbExpanded = !climbExpanded }
                 ) {
                     OutlinedTextField(
-                        value = selectedClimb,
+                        value = selectedClimb.label,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Climb Level") },
@@ -171,9 +212,9 @@ fun AutonScreen(
                         expanded = climbExpanded,
                         onDismissRequest = { climbExpanded = false }
                     ) {
-                        climbOptions.forEach { option ->
+                        Climb.entries.forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(option) },
+                                text = { Text(option.label) },
                                 onClick = {
                                     selectedClimb = option
                                     climbExpanded = false
@@ -185,13 +226,13 @@ fun AutonScreen(
 
                 Column {
                     Text(
-                        text = "Quality?",
+                        text = "Auton Quality?",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val drawables = listOf(
@@ -221,7 +262,28 @@ fun AutonScreen(
                 }
             }
             // little dude and next button
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        if (!navClicked) {
+                            state.withMatch {
+                                state.setMatch(it.copy(
+                                    autonMoved = robotMoved,
+                                    autonFuelPickup = fuelPickup,
+                                    autonInactiveScore = inactiveScore,
+                                    autonActiveScore = activeScore,
+                                    autonPenalties = penalties,
+                                    autonClimb = selectedClimb,
+                                    autonQuality = selectedQuality
+                                ))
+                            }
+                            nav.navigate(Screen.Teleop)
+                            navClicked = true
+                        }
+                    }
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.larry),
                     contentScale = ContentScale.Fit,
@@ -230,8 +292,10 @@ fun AutonScreen(
                         .size(420.dp)
                 )
                 FilledIconButton(
-                    onClick = { nav.navigate(Screen.Teleop) },
-                    modifier = Modifier.size(60.dp),
+                    onClick = {},
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(bottom = 32.dp),
                     shape = CircleShape,
                     colors = filledIconButtonColors(
                         containerColor = orangeColor,

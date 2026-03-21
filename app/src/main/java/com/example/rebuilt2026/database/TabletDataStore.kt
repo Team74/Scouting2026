@@ -67,7 +67,7 @@ class TabletDataStore(
     fun setScouter(value: Scouter) {
         coroutine.launch { context.dataStore.updateData { it.copy(scouting = value) } }
     }
-    fun withScouter(lambda: (Scouter) -> Unit) {
+    fun withScouter(lambda: suspend (Scouter) -> Unit) {
         coroutine.launch { getScouter().collect { lambda(it) } }
     }
 
@@ -75,7 +75,7 @@ class TabletDataStore(
     fun setMatch(value: MatchData) {
         coroutine.launch { context.dataStore.updateData { it.copy(matchData = value) } }
     }
-    fun withMatch(lambda: (MatchData) -> Unit) {
+    fun withMatch(lambda: suspend (MatchData) -> Unit) {
         coroutine.launch { getMatch().collect { lambda(it) } }
     }
 

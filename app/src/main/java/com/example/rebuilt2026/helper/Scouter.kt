@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class Scouter(pos: String) {
+enum class Scouter(val pos: String) {
 
     NONE("Device In Error"),
     BLUE_1("Blue 1"),

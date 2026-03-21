@@ -37,19 +37,20 @@ fun saveDatabaseToCsv(
                     // Fetch property names
                     val names = MatchData.getPropertyNames()
                     // Join them to a string as headers
-                    val headers = names.joinToString { name -> "$name," } + "\n"
+                    val headers = names.joinToString(separator = "") { "$it," } + "\n"
                     // Write property names as csv headers
                     out.write(headers)
+                    println(headers)
 
                     // Write each MatchData instance as a row
                     matches.forEach { match ->
                         out.write(match
                             .getPropertyMap()
                             .map { prop -> prop.value }
-                            .joinToString { value ->
+                            .joinToString(separator = "") { value ->
                                 // Check if value is a string, if so surround with quotes
                                 if (value is String) {
-                                    "\"$value\","
+                                    "\"${value.replace('\n', ';')}\","
                                 } else {
                                     "$value,"
                                 }

@@ -21,7 +21,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,31 +38,45 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.navigation.NavHostController
 import com.example.rebuilt2026.database.TabletDataStore
-import com.example.rebuilt2026.database.TabletDatabase
 import com.example.rebuilt2026.helper.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreMatchScreen(
     nav: NavHostController,
-    db: TabletDatabase,
     state: TabletDataStore
 ) {
 
-    var textfield by remember { mutableStateOf("") }
-    var textfield2 by remember { mutableStateOf("") }
+    var primaryColor by remember { mutableStateOf(Color.Transparent) }
+
+    var matchNumber by remember { mutableStateOf("") }
+    var teamNumber by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        state.withScouter { primaryColor = it.color() }
+        state.withMatch {
+            matchNumber = it.match.toString()
+            teamNumber = it.team.toString()
+        }
+    }
 
     Scaffold(
+
         topBar = {
             TopAppBar(
                 title = { Text("PreMatch Screen") },
                 navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack()}) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "")
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "", tint = Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = primaryColor,
+                    titleContentColor = Color.White
+                )
             )
         }
+
     ) { innerPadding ->
 
         Row(
@@ -86,13 +102,11 @@ fun PreMatchScreen(
                     )
                 )
                 TextField(
-                    textfield,
+                    matchNumber,
                     onValueChange = { text ->
-                        if (text.isDigitsOnly()) {
-                            textfield = text
+                        if (text.isDigitsOnly() && text.length < 7) {
+                            matchNumber = text
                         }
-
-
                     },
                     label = { Text("Match Number") },
                     modifier = Modifier.padding(top = 30.dp, bottom = 30.dp),
@@ -102,14 +116,13 @@ fun PreMatchScreen(
 
                 )
                 TextField(
-                    textfield2,
+                    teamNumber,
                     onValueChange = { text ->
-                        if (text.isDigitsOnly()) {
-                            textfield2 = text
+                        if (text.isDigitsOnly() && text.length < 7) {
+                            teamNumber = text
                         }
-
                     },
-                    label = { Text("Alliance Number") },
+                    label = { Text("Team Number") },
                     modifier = Modifier
                         .padding(top = 30.dp),
                     singleLine = true,
@@ -119,13 +132,27 @@ fun PreMatchScreen(
             }
 
             Button(
-                onClick = { nav.navigate(Screen.Auton) },
+                onClick = {
+                    if (
+                        !matchNumber.isEmpty() &&
+                        matchNumber.isDigitsOnly() &&
+                        !teamNumber.isEmpty() &&
+                        teamNumber.isDigitsOnly()
+                    ) {
+                        state.withMatch {
+                            state.setMatch(it.copy(
+                                match = matchNumber.toInt(),
+                                team = teamNumber.toInt()
+                            ))
+                        }
+                        nav.navigate(Screen.Auton)
+                    }
+                },
                 modifier = Modifier,
                 shape = RoundedCornerShape(32.dp),
                 contentPadding = PaddingValues (100.dp)
-
             ) {
-                Text("Next", fontSize = 32.sp)
+                Text("Auton", fontSize = 32.sp)
             }
 
         }
