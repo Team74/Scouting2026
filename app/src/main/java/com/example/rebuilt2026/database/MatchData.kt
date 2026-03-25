@@ -32,6 +32,9 @@ data class MatchData(
     val teleopInactiveScore: Int = 0,
     val teleopActiveScore: Int = 0,
     val teleopPenalties: Int = 0,
+    val teleopHumanScore: Int = 0,
+    val teleopHumanActive: Boolean = false,
+    val teleopHumanQuality: Int = 0,
 
     // PostMatch
     val endClimb: Climb = Climb.NO_CLIMB,
