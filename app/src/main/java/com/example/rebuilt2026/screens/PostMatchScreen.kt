@@ -60,19 +60,31 @@ fun PostMatchScreen(
     state: TabletDataStore
 ) {
 
-    // Screen state
+    /* ----------------------------------------------------------------------------------------- */
+    // [STATE]
+    /* ----------------------------------------------------------------------------------------- */
+
+    // Scouter
     var primaryColor by remember { mutableStateOf(Color.Transparent) }
 
-    var climbExpanded by remember { mutableStateOf(false) }
+    // Match state
     var endClimb by remember { mutableStateOf(Climb.NO_CLIMB) }
-
     var matchQuality by remember { mutableIntStateOf(0) }
     var playedDefense by remember { mutableStateOf(false) }
     var didRobotDisable by remember { mutableStateOf(false) }
     var notes by remember { mutableStateOf("") }
 
+    // Gui state
+    var climbExpanded by remember { mutableStateOf(false) }
+    var transitioning by remember { mutableStateOf(true) }
+
+    /* ----------------------------------------------------------------------------------------- */
+    // [INIT]
+    /* ----------------------------------------------------------------------------------------- */
+
     // Init state
     LaunchedEffect(Unit) {
+
         state.withScouter { primaryColor = it.color() }
         state.withMatch {
             endClimb = it.endClimb
@@ -80,8 +92,15 @@ fun PostMatchScreen(
             playedDefense = it.playedDefense
             didRobotDisable = it.didRobotDisable
             notes = it.notes
+            // After init ends
+            transitioning = false
         }
+
     }
+
+    /* ----------------------------------------------------------------------------------------- */
+    // [GUI]
+    /* ----------------------------------------------------------------------------------------- */
 
     // User interface
     Scaffold(
@@ -91,16 +110,19 @@ fun PostMatchScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            state.withMatch {
-                                state.setMatch(it.copy(
-                                    endClimb = endClimb,
-                                    matchQuality = matchQuality,
-                                    playedDefense = playedDefense,
-                                    didRobotDisable = didRobotDisable,
-                                    notes = notes
-                                ))
+                            if (!transitioning) {
+                                transitioning = true
+                                state.withMatch {
+                                    state.setMatch(it.copy(
+                                        endClimb = endClimb,
+                                        matchQuality = matchQuality,
+                                        playedDefense = playedDefense,
+                                        didRobotDisable = didRobotDisable,
+                                        notes = notes
+                                    ))
+                                    nav.popBackStack()
+                                }
                             }
-                            nav.popBackStack()
                         }
                     ) { Icon(Icons.AutoMirrored.Default.ArrowBack, null, tint = Color.White) }
                 },
@@ -194,6 +216,8 @@ fun PostMatchScreen(
                     }
                 }
 
+                Image(painterResource(R.drawable.fallen_over), null, modifier = Modifier.size(64.dp))
+
             }
 
             Column(
@@ -230,24 +254,27 @@ fun PostMatchScreen(
 
             Button(
                 onClick = {
-                    state.withMatch {
-                        db.matchDataDao().update(it.copy(
-                            endClimb = endClimb,
-                            matchQuality = matchQuality,
-                            playedDefense = playedDefense,
-                            didRobotDisable = didRobotDisable,
-                            notes = notes
-                        ))
-                        nav.navigate(Screen.Home) {
-                            popUpTo(Screen.Home)
+                    if (!transitioning) {
+                        transitioning = true
+                        state.withMatch {
+                            db.matchDataDao().update(
+                                it.copy(
+                                    endClimb = endClimb,
+                                    matchQuality = matchQuality,
+                                    playedDefense = playedDefense,
+                                    didRobotDisable = didRobotDisable,
+                                    notes = notes
+                                )
+                            )
+                            nav.navigate(Screen.Home) { popUpTo(Screen.Home) }
                         }
                     }
                 },
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
-                    .size(128.dp)
+                    .size(200.dp)
             ) {
-                Text("Save Match!")
+                Text("Save\nMatch!", fontSize = 22.sp)
             }
 
         }

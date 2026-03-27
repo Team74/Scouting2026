@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
@@ -23,6 +25,7 @@ import com.example.rebuilt2026.screens.PostMatchScreen
 import com.example.rebuilt2026.screens.PreMatchScreen
 import com.example.rebuilt2026.screens.TeleopScreen
 import com.example.rebuilt2026.ui.theme.Rebuilt2026Theme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -33,7 +36,7 @@ class MainActivity : ComponentActivity() {
     // App database instance to be initialized in the onCreate function
     private lateinit var tabletDatabase: TabletDatabase
     // App preferences used for tablet position and between-screen state tracking
-    private lateinit var tabletState: TabletDataStore
+    private lateinit var dataStore: TabletDataStore
     // Activity launcher for the file selector when exporting the database to csv
     val getContent = registerForActivityResult(ActivityResultContracts.CreateDocument(
         "text/csv"
@@ -65,7 +68,7 @@ class MainActivity : ComponentActivity() {
                 /* ----------------------------------------------------------------------------- */
 
                 tabletDatabase = tabletDatabaseBuilder(appContext)
-                tabletState = TabletDataStore(LocalContext.current, coroutineScope)
+                dataStore = TabletDataStore(LocalContext.current, coroutineScope)
 
                 /* ----------------------------------------------------------------------------- */
                 // [NAVIGATION]
@@ -74,18 +77,25 @@ class MainActivity : ComponentActivity() {
                 // Create the navigation controller for moving between screens
                 val navController = rememberNavController()
                 // This is the mapping of the Screen enum to each screen composable
-                NavHost(navController, Screen.Home) {
-                    composable<Screen.Home>         { HomeScreen(navController, tabletState) }
-                    composable<Screen.PreMatch>     { PreMatchScreen(navController, tabletState) }
-                    composable<Screen.Auton>        { AutonScreen(navController, tabletState) }
-                    composable<Screen.Teleop>       { TeleopScreen(navController, tabletState) }
-                    composable<Screen.PostMatch>    { PostMatchScreen(navController, tabletDatabase, tabletState) }
+                NavHost(
+                    navController = navController,
+                    startDestination = Screen.Home,
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None },
+                    popExitTransition = { ExitTransition.None }
+                ) {
+                    composable<Screen.Home>         { HomeScreen(navController, dataStore) }
+                    composable<Screen.PreMatch>     { PreMatchScreen(navController, dataStore) }
+                    composable<Screen.Auton>        { AutonScreen(navController, dataStore) }
+                    composable<Screen.Teleop>       { TeleopScreen(navController, dataStore) }
+                    composable<Screen.PostMatch>    { PostMatchScreen(navController, tabletDatabase, dataStore) }
                     composable<Screen.Admin>        {
                         AdminScreen(
-                            navController,
-                            tabletState,
-                            { tabletState.withMatch { tabletDatabase.matchDataDao().nuke() } },
-                            { tabletState.withScouter { launchExportPathSelector(it.name) } }
+                            nav = navController,
+                            state = dataStore,
+                            onNukeDatabase = { coroutineScope.launch { tabletDatabase.matchDataDao().nuke() } },
+                            onExportDatabase = { dataStore.withScouter { launchExportPathSelector(it.name) } }
                         )
                     }
                 }

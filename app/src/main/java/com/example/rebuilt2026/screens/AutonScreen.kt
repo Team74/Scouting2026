@@ -62,22 +62,35 @@ fun AutonScreen(
     state: TabletDataStore
 ) {
 
-    var primaryColor by remember { mutableStateOf(Color.Transparent) }
-    var navClicked by remember { mutableStateOf(false) }
+    /* ----------------------------------------------------------------------------------------- */
+    // [STATE]
+    /* ----------------------------------------------------------------------------------------- */
 
+    // Constants
+    val orangeColor = Color(0xFFFF5900)
+
+    // Scouter
+    var primaryColor by remember { mutableStateOf(Color.Transparent) }
+
+    // Match state
     var fuelPickup by remember { mutableIntStateOf(0) }
     var inactiveScore by remember { mutableIntStateOf(0) }
     var activeScore by remember { mutableIntStateOf(0) }
     var penalties by remember { mutableIntStateOf(0) }
-
-    var climbExpanded by remember { mutableStateOf(false) }
     var selectedClimb by remember { mutableStateOf(Climb.NO_CLIMB) }
     var selectedQuality by remember { mutableIntStateOf(1) }
     var robotMoved by remember { mutableStateOf(false) }
 
-    val orangeColor = Color(0xFFFF5900)
+    // Gui state
+    var climbExpanded by remember { mutableStateOf(false) }
+    var transitioning by remember { mutableStateOf(true) }
+
+    /* ----------------------------------------------------------------------------------------- */
+    // [INIT]
+    /* ----------------------------------------------------------------------------------------- */
 
     LaunchedEffect(Unit) {
+
         state.withScouter { primaryColor = it.color() }
         state.withMatch {
             fuelPickup = it.autonFuelPickup
@@ -87,8 +100,15 @@ fun AutonScreen(
             selectedClimb = it.autonClimb
             selectedQuality = it.autonQuality
             robotMoved = it.autonMoved
+            // Applied after init
+            transitioning = false
         }
+
     }
+
+    /* ----------------------------------------------------------------------------------------- */
+    // [GUI]
+    /* ----------------------------------------------------------------------------------------- */
 
     Scaffold(
         topBar = {
@@ -97,20 +117,20 @@ fun AutonScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (!navClicked) {
+                            if (!transitioning) {
+                                transitioning = true
                                 state.withMatch {
                                     state.setMatch(it.copy(
-                                        autonMoved = robotMoved,
                                         autonFuelPickup = fuelPickup,
                                         autonInactiveScore = inactiveScore,
                                         autonActiveScore = activeScore,
                                         autonPenalties = penalties,
                                         autonClimb = selectedClimb,
-                                        autonQuality = selectedQuality
+                                        autonQuality = selectedQuality,
+                                        autonMoved = robotMoved
                                     ))
+                                    nav.popBackStack()
                                 }
-                                nav.popBackStack()
-                                navClicked = true
                             }
                         }
                     ) {
@@ -128,6 +148,7 @@ fun AutonScreen(
         Row(
             modifier = Modifier
                 .padding(innerPadding)
+                .padding(top = 8.dp)
         ) {
             // auton and scoring
             Column (
@@ -267,7 +288,8 @@ fun AutonScreen(
                 modifier = Modifier
                     .weight(1f)
                     .clickable {
-                        if (!navClicked) {
+                        if (!transitioning) {
+                            transitioning = true
                             state.withMatch {
                                 state.setMatch(it.copy(
                                     autonMoved = robotMoved,
@@ -278,9 +300,8 @@ fun AutonScreen(
                                     autonClimb = selectedClimb,
                                     autonQuality = selectedQuality
                                 ))
+                                nav.navigate(Screen.Teleop)
                             }
-                            nav.navigate(Screen.Teleop)
-                            navClicked = true
                         }
                     }
             ) {
@@ -292,7 +313,23 @@ fun AutonScreen(
                         .size(420.dp)
                 )
                 FilledIconButton(
-                    onClick = {},
+                    onClick = {
+                        if (!transitioning) {
+                            transitioning = true
+                            state.withMatch {
+                                state.setMatch(it.copy(
+                                    autonMoved = robotMoved,
+                                    autonFuelPickup = fuelPickup,
+                                    autonInactiveScore = inactiveScore,
+                                    autonActiveScore = activeScore,
+                                    autonPenalties = penalties,
+                                    autonClimb = selectedClimb,
+                                    autonQuality = selectedQuality
+                                ))
+                                nav.navigate(Screen.Teleop)
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .size(60.dp)
                         .padding(bottom = 32.dp),

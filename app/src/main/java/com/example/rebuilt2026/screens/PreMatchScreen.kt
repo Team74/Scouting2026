@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
 import androidx.navigation.NavHostController
+import com.example.rebuilt2026.database.MatchData
 import com.example.rebuilt2026.database.TabletDataStore
 import com.example.rebuilt2026.helper.Screen
 
@@ -47,36 +49,50 @@ fun PreMatchScreen(
     state: TabletDataStore
 ) {
 
+    /* ----------------------------------------------------------------------------------------- */
+    // [STATE]
+    /* ----------------------------------------------------------------------------------------- */
+
+    // Scouter
     var primaryColor by remember { mutableStateOf(Color.Transparent) }
 
-    var matchNumber by remember { mutableStateOf("") }
-    var teamNumber by remember { mutableStateOf("") }
+    // Match state
+    var matchNumber by remember { mutableIntStateOf(0) }
+    var teamNumber by remember { mutableIntStateOf(0) }
+
+    // Gui state
+    var transitioning by remember { mutableStateOf(true) }
+
+    /* ----------------------------------------------------------------------------------------- */
+    // [INIT]
+    /* ----------------------------------------------------------------------------------------- */
 
     LaunchedEffect(Unit) {
+
+        // Fetch scouter color
         state.withScouter { primaryColor = it.color() }
+        // Fetch current match state
         state.withMatch {
-            matchNumber = it.match.toString()
-            teamNumber = it.team.toString()
+            matchNumber = it.match
+            teamNumber = it.team
+            // Update at end of init
+            transitioning = false
         }
+
     }
 
+    /* ----------------------------------------------------------------------------------------- */
+    // [GUI]
+    /* ----------------------------------------------------------------------------------------- */
+
     Scaffold(
-
-        topBar = {
-            TopAppBar(
-                title = { Text("PreMatch Screen") },
-                navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = primaryColor,
-                    titleContentColor = Color.White
-                )
-            )
-        }
-
+        topBar = { TitleBar(primaryColor) {
+            if (!transitioning) {
+                transitioning = true
+                state.setMatch(MatchData())
+                nav.popBackStack()
+            }
+        } }
     ) { innerPadding ->
 
         Row(
@@ -86,69 +102,34 @@ fun PreMatchScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
+
+            // Uhhhhhh this is doing something I think
             Spacer(modifier = Modifier)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
 
-                Text(
-                    "  Record Match  ",
-                    fontSize = 42.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(221, 171, 159),
-                    modifier = Modifier.background(
-                        Color(27, 80, 149),
-                        shape = MaterialTheme.shapes.medium
-                    )
-                )
-                TextField(
-                    matchNumber,
-                    onValueChange = { text ->
-                        if (text.isDigitsOnly() && text.length < 7) {
-                            matchNumber = text
-                        }
-                    },
-                    label = { Text("Match Number") },
-                    modifier = Modifier.padding(top = 30.dp, bottom = 30.dp),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            // Match and team number entries (probably should have gone in their own functions)
+            MatchEntry(
+                matchNumber = matchNumber,
+                teamNumber = teamNumber,
+                onMatchEnter = { matchNumber = it },
+                onTeamEnter = { teamNumber = it }
+            )
 
-
-                )
-                TextField(
-                    teamNumber,
-                    onValueChange = { text ->
-                        if (text.isDigitsOnly() && text.length < 7) {
-                            teamNumber = text
-                        }
-                    },
-                    label = { Text("Team Number") },
-                    modifier = Modifier
-                        .padding(top = 30.dp),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-
-            }
-
+            // Continue to next phase button
             Button(
                 onClick = {
-                    if (
-                        !matchNumber.isEmpty() &&
-                        matchNumber.isDigitsOnly() &&
-                        !teamNumber.isEmpty() &&
-                        teamNumber.isDigitsOnly()
-                    ) {
+                    if (!transitioning) {
+                        transitioning = true
                         state.withMatch {
-                            state.setMatch(it.copy(
-                                match = matchNumber.toInt(),
-                                team = teamNumber.toInt()
-                            ))
+                            state.setMatch(
+                                it.copy(
+                                    match = matchNumber,
+                                    team = teamNumber
+                                )
+                            )
+                            nav.navigate(Screen.Auton)
                         }
-                        nav.navigate(Screen.Auton)
                     }
                 },
-                modifier = Modifier,
                 shape = RoundedCornerShape(32.dp),
                 contentPadding = PaddingValues (100.dp)
             ) {
@@ -159,3 +140,73 @@ fun PreMatchScreen(
     }
 
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TitleBar(color: Color, onBack: () -> Unit) {
+
+    TopAppBar(
+        title = { Text("PreMatch Screen") },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = color,
+            titleContentColor = Color.White
+        )
+    )
+
+}
+
+@Composable
+fun MatchEntry(
+    matchNumber: Int,
+    teamNumber: Int,
+    onMatchEnter: (Int) -> Unit,
+    onTeamEnter: (Int) -> Unit
+) {
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "Record Match",
+            fontSize = 42.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(221, 171, 159),
+            modifier = Modifier
+                .background(Color(27, 80, 149), shape = MaterialTheme.shapes.medium)
+                .padding(horizontal = 16.dp)
+        )
+
+        TextField(
+            value = matchNumber.toString(),
+            onValueChange = { if (it.isDigitsOnly() && it.length < 7) onMatchEnter(it.toInt()) },
+            label = { Text("Match Number") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .padding(top = 30.dp, bottom = 30.dp)
+        )
+
+        TextField(
+            value = teamNumber.toString(),
+            onValueChange = { if (it.isDigitsOnly() && it.length < 7) onTeamEnter(it.toInt()) },
+            label = { Text("Team Number") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .padding(top = 30.dp)
+        )
+
+    }
+
+}
+
+
+
+
+

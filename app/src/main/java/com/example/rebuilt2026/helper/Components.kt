@@ -2,7 +2,6 @@ package com.example.rebuilt2026.helper
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,11 +26,9 @@ fun ScoreSystem(
     label: String,
     score: Int,
     onScoreChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
     buttonColor: Color = Color(0xFF7449E3)
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
